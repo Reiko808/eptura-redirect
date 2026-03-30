@@ -3,57 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eptura Engage System-Check</title>
+    <title>Eptura Engage Access</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; color: #333; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f7f9; text-align: center; }
+        .container { padding: 20px; max-width: 400px; }
+        .btn { display: inline-block; padding: 15px 30px; background-color: #0056b3; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; margin-top: 20px; transition: background 0.3s; border: none; cursor: pointer; }
+        .spinner { border: 4px solid rgba(0,0,0,.1); border-left-color: #0056b3; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div>
-        <div class="spinner"></div>
-        <p>Prüfe Systemvoraussetzungen für <strong>Eptura Engage</strong>...</p>
-        <p id="manual-link" style="display:none;">
-            Falls Sie nicht automatisch weitergeleitet werden: <br>
-            <a href="#" id="store-link">Hier klicken</a>
-        </p>
+    <div class="container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Systemprüfung läuft...</p>
+        </div>
+        <div id="manual" style="display:none;">
+            <p>Die App konnte nicht automatisch gestartet werden.</p>
+            <button onclick="executeRedirect()" class="btn">App öffnen / Laden</button>
+        </div>
     </div>
 
     <script>
-      (function() {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isAndroid = /android/i.test(ua);
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        const config = {
+            schemes: ["epturaengage://", "condeco://"],
+            playStore: "https://play.google.com/store/apps/details?id=com.condecosoftware.condeco",
+            appStore: "https://apps.apple.com/app/eptura-engage/id1565099537"
+        };
 
-    const config = {
-        // Wir triggern beide Schemes sequenziell, falls das Rebranding auch das Scheme betrifft
-        schemes: ["epturaengage://", "condeco://"], 
-        playStore: "https://play.google.com/store/apps/details?id=com.condecosoftware.condeco",
-        appStore: "https://apps.apple.com/app/eptura-engage/id1565099537"
-    };
+        function executeRedirect() {
+            const start = Date.now();
+            const ua = navigator.userAgent || navigator.vendor;
+            const isAndroid = /android/i.test(ua);
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const storeUrl = isAndroid ? config.playStore : (isIOS ? config.appStore : null);
 
-    let storeUrl = isAndroid ? config.playStore : (isIOS ? config.appStore : null);
+            // Trigger Custom Schemes
+            config.schemes.forEach(s => { window.location.href = s; });
 
-    if (storeUrl) {
-        // Deep Link Versuche
-        config.schemes.forEach(scheme => {
-            window.location.href = scheme;
-        });
+            // Fallback nach 2.5s, falls Browser-Fokus erhalten bleibt (App nicht geöffnet)
+            setTimeout(() => {
+                if (Date.now() - start < 3000 && storeUrl) {
+                    window.location.href = storeUrl;
+                }
+            }, 2500);
+        }
 
-        const start = Date.now();
-        setTimeout(() => {
-            if (Date.now() - start < 3000) {
-                window.location.href = storeUrl;
-            }
-        }, 2500);
-
-        document.getElementById('manual-link').style.display = 'block';
-        document.getElementById('store-link').href = storeUrl;
-    } else {
-        document.body.innerHTML = "Bitte nutzen Sie ein mobiles Endgerät (iOS/Android).";
-    }
-})();
+        // Automatischer Erstversuch (Best Effort)
+        window.onload = () => {
+            executeRedirect();
+            // Nach 3s Button einblenden, falls Redirect fehlschlug
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('manual').style.display = 'block';
+            }, 3000);
+        };
     </script>
 </body>
 </html>
