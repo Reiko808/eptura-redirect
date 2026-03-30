@@ -21,40 +21,39 @@
     </div>
 
     <script>
-        (function() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isAndroid = /android/i.test(ua);
-            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      (function() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const isAndroid = /android/i.test(ua);
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
 
-            const config = {
-                appScheme: "condeco://", // Technisches Präfix der App
-                playStore: "https://play.google.com/store/apps/details?id=com.condecosoftware.condeco",
-                appStore: "https://apps.apple.com/app/eptura-engage/id1552591142"
-            };
+    const config = {
+        // Wir triggern beide Schemes sequenziell, falls das Rebranding auch das Scheme betrifft
+        schemes: ["epturaengage://", "condeco://"], 
+        playStore: "https://play.google.com/store/apps/details?id=com.condecosoftware.condeco",
+        appStore: "https://apps.apple.com/app/eptura-engage/id1565099537"
+    };
 
-            let storeUrl = isAndroid ? config.playStore : (isIOS ? config.appStore : null);
+    let storeUrl = isAndroid ? config.playStore : (isIOS ? config.appStore : null);
 
-            if (storeUrl) {
-                // 1. Intent: App-Start versuchen
-                window.location.href = config.appScheme;
+    if (storeUrl) {
+        // Deep Link Versuche
+        config.schemes.forEach(scheme => {
+            window.location.href = scheme;
+        });
 
-                // 2. Fallback: Nach 2500ms Store öffnen, falls App nicht reagiert
-                const start = Date.now();
-                setTimeout(() => {
-                    // Prüfen, ob der Nutzer die Seite noch sieht (Browser-Fokus)
-                    // Wenn die App geöffnet wurde, verliert die Seite den Fokus
-                    if (Date.now() - start < 3000) {
-                        window.location.href = storeUrl;
-                    }
-                }, 2500);
-
-                // UI-Redundanz bei Blockade durch Pop-up-Blocker
-                document.getElementById('manual-link').style.display = 'block';
-                document.getElementById('store-link').href = storeUrl;
-            } else {
-                document.body.innerHTML = "Bitte öffnen Sie diesen Link auf einem Mobilgerät.";
+        const start = Date.now();
+        setTimeout(() => {
+            if (Date.now() - start < 3000) {
+                window.location.href = storeUrl;
             }
-        })();
+        }, 2500);
+
+        document.getElementById('manual-link').style.display = 'block';
+        document.getElementById('store-link').href = storeUrl;
+    } else {
+        document.body.innerHTML = "Bitte nutzen Sie ein mobiles Endgerät (iOS/Android).";
+    }
+})();
     </script>
 </body>
 </html>
